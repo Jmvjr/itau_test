@@ -1,0 +1,67 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+*.dll
+*.exe
+*.pdb
+*.so
+*.dylib
+
+# IDE specific files
+.vs/
+.vscode/
+.idea/
+*.sln.iml
+*.user
+*.userprefs
+.DS_Store
+
+# Configuration files with sensitive data
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json.template
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Database and logs
+*.sqlite
+*.sqlite3
+*.db
+*.mdb
+logs/
+*.log
+
+# Test coverage
+coverage/
+*.trx
+coverage.cobertura.xml
+
+# NuGet
+.nuget/
+packages/
+*.nuspec
+
+# Runtime
+.dotnet/
+
+# Frontend (se houver depois)
+node_modules/
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# OS specific
+Thumbs.db
