@@ -1,6 +1,48 @@
 @CompraProgramada.API_HostAddress = http://localhost:5031
+@ContentType = application/json
 
-GET {{CompraProgramada.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### Test - Criar novo cliente
+POST {{CompraProgramada.API_HostAddress}}/api/cliente
+Content-Type: {{ContentType}}
 
+{
+  "nome": "João Silva",
+  "cpf": "12345678901",
+  "email": "joao@example.com",
+  "valorMensal": 1000.00
+}
+
+###
+
+### Test - Obter cliente por ID
+GET {{CompraProgramada.API_HostAddress}}/api/cliente/1
+Accept: {{ContentType}}
+
+###
+
+### Test - Obter cliente por CPF
+GET {{CompraProgramada.API_HostAddress}}/api/cliente/cpf/12345678901
+Accept: {{ContentType}}
+
+###
+
+### Test - Listar clientes ativos (com paginação)
+GET {{CompraProgramada.API_HostAddress}}/api/cliente?pageNumber=1&pageSize=10
+Accept: {{ContentType}}
+
+###
+
+### Test - Atualizar valor mensal
+PUT {{CompraProgramada.API_HostAddress}}/api/cliente/1/valor
+Content-Type: {{ContentType}}
+
+{
+  "novoValor": 1500.00
+}
+
+###
+
+### Test - Desativar cliente
+DELETE {{CompraProgramada.API_HostAddress}}/api/cliente/1
+Accept: {{ContentType}}
 ###

@@ -1,4 +1,5 @@
 using CompraProgramada.Infrastructure;
+using CompraProgramada.Application; // Force load Application assembly
 using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,13 +12,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddInfrastructure(connectionString);
 
-// Configure MediatR
-var applicationAssembly = AppDomain.CurrentDomain.GetAssemblies()
-    .FirstOrDefault(a => a.GetName().Name == "CompraProgramada.Application");
-builder.Services.AddMediatR(cfg => 
-    cfg.RegisterServicesFromAssemblies(
-        typeof(Program).Assembly,
-        applicationAssembly ?? typeof(Program).Assembly));
+// Configure MediatR - Load handlers from Application assembly explicitly
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CompraProgramada.Application.Commands.CriarClienteCommand>());
 
 // Configure Swagger/OpenAPI
 builder.Services.AddEndpointsApiExplorer();
