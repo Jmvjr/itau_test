@@ -96,7 +96,6 @@ public class ClienteTests
 
         // Assert
         cliente.Ativo.Should().BeFalse();
-        cliente.DataSaida.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
 
     [Fact]

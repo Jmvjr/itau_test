@@ -194,6 +194,7 @@ public class CestaRecomendacaoTests
         var tickersEntrando = cestaNova.IdentificarTickersEntrados(cestaAntigaObj);
 
         // Assert
+        tickersEntrando.Should().NotBeNull();
         tickersEntrando.Should().Contain(new Ticker("BBAS3"));
     }
 
@@ -225,6 +226,7 @@ public class CestaRecomendacaoTests
         var tickersSaindo = cestaAntigaObj.IdentificarTickersSaidos(cestaNovaObj);
 
         // Assert
+        tickersSaindo.Should().NotBeNull();
         tickersSaindo.Should().Contain(new Ticker("B3SA3"));
     }
 }

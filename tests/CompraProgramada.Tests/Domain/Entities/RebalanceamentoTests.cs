@@ -96,7 +96,7 @@ public class RebalanceamentoTests
         // Arrange & Act & Assert
         var act = () => Rebalanceamento.CriarPorMudancaCesta(
             clienteId: 123,
-            tickerVendido: null,
+            tickerVendido: null!,
             tickerComprado: new Ticker("VALE3"),
             valorVenda: 5000m);
         act.Should().Throw<ArgumentNullException>();
@@ -109,7 +109,7 @@ public class RebalanceamentoTests
         var act = () => Rebalanceamento.CriarPorMudancaCesta(
             clienteId: 123,
             tickerVendido: new Ticker("PETR4"),
-            tickerComprado: null,
+            tickerComprado: null!,
             valorVenda: 5000m);
         act.Should().Throw<ArgumentNullException>();
     }

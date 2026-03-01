@@ -18,9 +18,9 @@ public interface IRepository<T> where T : class
 /// </summary>
 public interface IClienteRepository : IRepository<Entities.Cliente>
 {
-    Task<Entities.Cliente?> ObterPorCpfAsync(string cpf);
+    Task<Entities.Cliente?> ObterPorCpfAsync(ValueObjects.CPF cpf);
     Task<IEnumerable<Entities.Cliente>> ObterClientesAtivosAsync();
-    Task<bool> ExisteCpfAsync(string cpf);
+    Task<bool> ExisteCpfAsync(ValueObjects.CPF cpf);
 }
 
 /// <summary>
@@ -38,7 +38,7 @@ public interface IContaGraficaRepository : IRepository<Entities.ContaGrafica>
 /// </summary>
 public interface ICustodiaRepository : IRepository<Entities.Custodia>
 {
-    Task<Entities.Custodia?> ObterPorContaETickerAsync(long contaGraficaId, string ticker);
+    Task<Entities.Custodia?> ObterPorContaETickerAsync(long contaGraficaId, ValueObjects.Ticker ticker);
     Task<IEnumerable<Entities.Custodia>> ObterPorContaAsync(long contaGraficaId);
 }
 
@@ -64,8 +64,8 @@ public interface IOrdemCompraRepository : IRepository<Entities.OrdemCompra>
 /// </summary>
 public interface ICotacaoRepository : IRepository<Entities.Cotacao>
 {
-    Task<Entities.Cotacao?> ObterMaisRecenteAsync(string ticker);
-    Task<Entities.Cotacao?> ObterPorDataETickerAsync(DateTime data, string ticker);
+    Task<Entities.Cotacao?> ObterMaisRecenteAsync(ValueObjects.Ticker ticker);
+    Task<Entities.Cotacao?> ObterPorDataETickerAsync(DateTime data, ValueObjects.Ticker ticker);
 }
 
 /// <summary>

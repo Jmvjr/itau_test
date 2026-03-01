@@ -16,7 +16,6 @@ public class Cliente
     public decimal ValorMensal { get; private set; }
     public bool Ativo { get; private set; }
     public DateTime DataAdesao { get; private set; }
-    public DateTime? DataSaida { get; private set; }
 
     // EF Core requires a parameterless constructor
     protected Cliente() { }
@@ -48,7 +47,6 @@ public class Cliente
             throw new InvalidOperationException("Cliente já estava inativo");
 
         Ativo = false;
-        DataSaida = DateTime.UtcNow;
     }
 
     /// <summary>
