@@ -19,11 +19,11 @@ public class DistribuicaoRepository : BaseRepository<Distribuicao>
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<Distribuicao>> ObterPorCustodiaFilhoteAsync(long custodiaFilhoteId)
+    public async Task<IEnumerable<Distribuicao>> ObterPorClienteAsync(long clienteId)
     {
         return await _dbSet
             .AsNoTracking()
-            .Where(d => d.CustodiaFilhoteId == custodiaFilhoteId)
+            .Where(d => d.ClienteId == clienteId)
             .OrderByDescending(d => d.DataDistribuicao)
             .ToListAsync();
     }

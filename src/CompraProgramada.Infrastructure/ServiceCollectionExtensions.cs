@@ -39,6 +39,9 @@ public static class ServiceCollectionExtensions
 
         // Registrar Application Services
         services.AddScoped<ICotacaoService, CotacaoService>();
+        services.AddScoped<IComprasProgramadasService, ComprasProgramadasService>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IKafkaProducerService, KafkaProducerService>();
 
         return services;
     }

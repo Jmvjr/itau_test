@@ -16,6 +16,7 @@ public class Cliente
     public decimal ValorMensal { get; private set; }
     public bool Ativo { get; private set; }
     public DateTime DataAdesao { get; private set; }
+    public long? CestaRecomendacaoId { get; private set; }
 
     // EF Core requires a parameterless constructor
     protected Cliente() { }
@@ -65,6 +66,17 @@ public class Cliente
     public decimal CalcularValorParcela()
     {
         return Math.Truncate(ValorMensal / 3 * 100) / 100; // Truncar em 2 casas decimais
+    }
+
+    /// <summary>
+    /// Atribui uma cesta de recomendação ao cliente
+    /// </summary>
+    public void AtribuirCesta(long cestaRecomendacaoId)
+    {
+        if (cestaRecomendacaoId <= 0)
+            throw new ArgumentException("ID da cesta deve ser válido", nameof(cestaRecomendacaoId));
+
+        CestaRecomendacaoId = cestaRecomendacaoId;
     }
 
     private static void ValidarNome(string nome)

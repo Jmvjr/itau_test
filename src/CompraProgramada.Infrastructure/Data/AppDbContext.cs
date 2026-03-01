@@ -149,12 +149,6 @@ public class AppDbContext : DbContext
 
         // Índice composto para consultas rápidas
         builder.HasIndex(c => new { c.ContaGraficaId, c.Ticker }).IsUnique().HasDatabaseName("UX_Custodia_ContaTicket");
-
-        // Relacionamento: Custodia 1:N Distribuições
-        builder.HasMany<Distribuicao>()
-            .WithOne()
-            .HasForeignKey(d => d.CustodiaFilhoteId)
-            .OnDelete(DeleteBehavior.Cascade);
     }
 
     private void ConfigureDistribuicao(ModelBuilder modelBuilder)
@@ -165,28 +159,42 @@ public class AppDbContext : DbContext
         builder.Property(d => d.Id).ValueGeneratedOnAdd();
 
         builder.Property(d => d.OrdemCompraId)
+            .IsRequired(false); // Nullable para compras programadas
+
+        builder.Property(d => d.ClienteId)
             .IsRequired();
 
-        builder.Property(d => d.CustodiaFilhoteId)
+        builder.Property(d => d.ContaMasterId)
             .IsRequired();
 
+        // Ticker como ValueObject
         builder.Property(d => d.Ticker)
+            .HasConversion(
+                ticker => ticker.Valor,
+                valor => new Ticker(valor))
+            .HasColumnName("Ticker")
             .HasMaxLength(10)
             .IsRequired();
 
+        // Quantidade como ValueObject
         builder.Property(d => d.Quantidade)
-            .HasColumnType("INT")
-            .IsRequired();
-
-        builder.Property(d => d.PrecoUnitario)
-            .HasColumnType("DECIMAL(18,4)")
+            .HasConversion(
+                qtd => qtd.Valor,
+                valor => new Quantidade(valor))
+            .HasColumnName("Quantidade")
             .IsRequired();
 
         builder.Property(d => d.DataDistribuicao)
             .HasColumnType("DATETIME")
             .IsRequired();
 
-        builder.HasIndex(d => new { d.OrdemCompraId, d.DataDistribuicao }).HasDatabaseName("IX_Distribuicao_OrdemData");
+        builder.HasIndex(d => new { d.ClienteId, d.DataDistribuicao }).HasDatabaseName("IX_Distribuicao_ClienteData");
+
+        // Relacionamento: Cliente 1:N Distribuições
+        builder.HasOne<Cliente>()
+            .WithMany()
+            .HasForeignKey(d => d.ClienteId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     private void ConfigureCestaRecomendacao(ModelBuilder modelBuilder)
