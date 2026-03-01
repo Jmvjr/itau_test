@@ -1,6 +1,9 @@
 using CompraProgramada.Infrastructure;
+using CompraProgramada.Infrastructure.Jobs;
 using CompraProgramada.Application; // Force load Application assembly
+using CompraProgramada.Application.Jobs;
 using MediatR;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +14,24 @@ builder.Services.AddControllers();
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
     ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
 builder.Services.AddInfrastructure(connectionString);
+
+// Configure Hangfire
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UseSqlServerStorage(connectionString, new Hangfire.SqlServer.SqlServerStorageOptions
+    {
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.Zero,
+        DisableGlobalLocks = true
+    }));
+
+builder.Services.AddHangfireServer();
+
+// Register Jobs Service
+builder.Services.AddScoped<IComprasProgramadasJobService, HangfireComprasProgramadasJobService>();
 
 // Configure MediatR - Load handlers from Application assembly explicitly
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CompraProgramada.Application.Commands.CriarClienteCommand>());
@@ -37,6 +58,13 @@ builder.Logging.AddDebug();
 
 var app = builder.Build();
 
+// Initialize Hangfire jobs on startup
+using (var scope = app.Services.CreateScope())
+{
+    var jobService = scope.ServiceProvider.GetRequiredService<IComprasProgramadasJobService>();
+    await jobService.RegistrarJobsRecurrentesAsync();
+}
+
 // Configure the HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -48,6 +76,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseHangfireDashboard("/hangfire");
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 

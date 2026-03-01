@@ -8,8 +8,11 @@ namespace CompraProgramada.Infrastructure.Repositories;
 
 public class CustodiaRepository : BaseRepository<Custodia>, ICustodiaRepository
 {
+    private readonly AppDbContext _appContext; // Adicionar referência para joins complexos
+
     public CustodiaRepository(AppDbContext context) : base(context)
     {
+        _appContext = context;
     }
 
     public async Task<Custodia?> ObterPorContaETickerAsync(long contaGraficaId, Ticker ticker)
@@ -24,6 +27,14 @@ public class CustodiaRepository : BaseRepository<Custodia>, ICustodiaRepository
         return await _dbSet
             .AsNoTracking()
             .Where(c => c.ContaGraficaId == contaGraficaId)
+            .ToListAsync();
+    }
+
+    public async Task<IEnumerable<Custodia>> ObterTodosPorClienteAsync(long clienteId)
+    {
+        return await _dbSet
+            .AsNoTracking()
+            .Where(c => c.ContaGrafica != null && c.ContaGrafica.ClienteId == clienteId)
             .ToListAsync();
     }
 }

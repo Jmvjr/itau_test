@@ -215,4 +215,77 @@ public class ComprasProgramadasServiceTests
         // This is now tested in domain entity tests.
         Assert.True(true);
     }
+
+    [Theory]
+    [InlineData(5)]   // Segunda-feira
+    [InlineData(12)]  // Segunda-feira
+    [InlineData(19)]  // Quarta-feira
+    public void AjustarDataParaDiaUtil_ComDiaUtil_MantemMesmaData(int dia)
+    {
+        // Arrange
+        var data = new DateTime(2026, 3, dia); // Março 2026
+        
+        // Act
+        var dataAjustada = _service.AjustarDataParaDiaUtil(data);
+
+        // Assert
+        Assert.Equal(data, dataAjustada);
+    }
+
+    [Fact]
+    public void AjustarDataParaDiaUtil_ComSabado_AjustaParaSegunda()
+    {
+        // Arrange - Dia 7 de março de 2026 é sábado
+        var sabado = new DateTime(2026, 3, 7);
+        var segundaEsperada = new DateTime(2026, 3, 9);
+
+        // Act
+        var dataAjustada = _service.AjustarDataParaDiaUtil(sabado);
+
+        // Assert
+        Assert.Equal(DayOfWeek.Saturday, sabado.DayOfWeek);
+        Assert.Equal(DayOfWeek.Monday, dataAjustada.DayOfWeek);
+        Assert.Equal(segundaEsperada, dataAjustada);
+    }
+
+    [Fact]
+    public void AjustarDataParaDiaUtil_ComDomingo_AjustaParaSegunda()
+    {
+        // Arrange - Dia 8 de março de 2026 é domingo
+        var domingo = new DateTime(2026, 3, 8);
+        var segundaEsperada = new DateTime(2026, 3, 9);
+
+        // Act
+        var dataAjustada = _service.AjustarDataParaDiaUtil(domingo);
+
+        // Assert
+        Assert.Equal(DayOfWeek.Sunday, domingo.DayOfWeek);
+        Assert.Equal(DayOfWeek.Monday, dataAjustada.DayOfWeek);
+        Assert.Equal(segundaEsperada, dataAjustada);
+    }
+
+    [Fact]
+    public void AjustarDataParaDiaUtil_Dia5QueEhSabado_AjustaParaSegunda()
+    {
+        // Arrange - Se o dia 5 cair em sábado, deve ajustar para segunda
+        // Precisamos encontrar um mês onde dia 5 é sábado
+        // Dia 5 de março 2026 é sexta, então vamos procurar outro mês
+        // Dia 5 de novembro 2026 é quarta...
+        // Para este teste, vamos usar um sábado que seja dia 5 em algum mês
+        // Dia 5 de junho de 2027 é quarta...
+        // Dia 5 de setembro 2026 é sexta...
+        // Dia 5 julho 2025 é sábado
+        var dia5Sabado = new DateTime(2025, 7, 5);
+        var segundaEsperada = new DateTime(2025, 7, 7);
+
+        // Act
+        var dataAjustada = _service.AjustarDataParaDiaUtil(dia5Sabado);
+
+        // Assert
+        Assert.Equal(DayOfWeek.Saturday, dia5Sabado.DayOfWeek);
+        Assert.Equal(5, dia5Sabado.Day);
+        Assert.Equal(DayOfWeek.Monday, dataAjustada.DayOfWeek);
+        Assert.Equal(7, dataAjustada.Day);
+        Assert.Equal(segundaEsperada, dataAjustada);
+    }
 }

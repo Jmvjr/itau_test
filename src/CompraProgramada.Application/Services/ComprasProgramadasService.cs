@@ -31,6 +31,8 @@ public class ComprasProgramadasService : IComprasProgramadasService
         if (!EhDataCompraValida(dataCompra))
             throw new ArgumentException($"Data inválida: {dataCompra:dd/MM/yyyy}. Deve ser 5, 15 ou 25");
 
+        var dataAjustada = AjustarDataParaDiaUtil(dataCompra);
+
         var ordensProcessadas = 0;
 
         try
@@ -69,7 +71,7 @@ public class ComprasProgramadasService : IComprasProgramadasService
                 foreach (var item in cesta.Itens)
                 {
                     var tickerStr = item.Ticker.Valor;
-                    var cotacao = await _cotacaoService.ObterCotacaoPorDataAsync(tickerStr, dataCompra);
+                    var cotacao = await _cotacaoService.ObterCotacaoPorDataAsync(tickerStr, dataAjustada);
                     
                     if (cotacao == null)
                         continue;
@@ -98,7 +100,7 @@ public class ComprasProgramadasService : IComprasProgramadasService
                     await PublicarIRAsync(contaMaster.Id, tickerStr, dataCompra, valorIR);
                 }
 
-                await DistribuirParaFilhotesAsync(contaMaster.Id, grupoClientes, cesta, dataCompra);
+                await DistribuirParaFilhotesAsync(contaMaster.Id, grupoClientes, cesta, dataAjustada);
             }
 
             await _unitOfWork.SaveChangesAsync();
@@ -155,7 +157,28 @@ public class ComprasProgramadasService : IComprasProgramadasService
         return proximas.Any();
     }
 
+    /// <summary>
+    /// Valida se a data é um dia de compra programada (5, 15 ou 25)
+    /// </summary>
     private bool EhDataCompraValida(DateTime data) => data.Day == 5 || data.Day == 15 || data.Day == 25;
+
+    /// <summary>
+    /// Ajusta a data para o próximo dia útil se cair em sábado/domingo
+    /// RN-026: Se o dia de compra (5, 15, 25) cair em fim de semana, processar na segunda-feira
+    /// </summary>
+    public DateTime AjustarDataParaDiaUtil(DateTime data)
+    {
+        // Se for sábado (6), avança para segunda (2 dias)
+        if (data.DayOfWeek == DayOfWeek.Saturday)
+            return data.AddDays(2);
+
+        // Se for domingo (0), avança para segunda (1 dia)
+        if (data.DayOfWeek == DayOfWeek.Sunday)
+            return data.AddDays(1);
+
+        // Caso contrário, mantém a data original
+        return data;
+    }
 
     private void CalcularQuantidades(decimal valor, decimal preco, int lote, out long padrao, out long fracao)
     {

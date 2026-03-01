@@ -40,6 +40,7 @@ public interface ICustodiaRepository : IRepository<Entities.Custodia>
 {
     Task<Entities.Custodia?> ObterPorContaETickerAsync(long contaGraficaId, ValueObjects.Ticker ticker);
     Task<IEnumerable<Entities.Custodia>> ObterPorContaAsync(long contaGraficaId);
+    Task<IEnumerable<Entities.Custodia>> ObterTodosPorClienteAsync(long clienteId);
 }
 
 /// <summary>

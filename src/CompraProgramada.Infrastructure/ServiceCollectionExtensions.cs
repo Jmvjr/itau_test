@@ -27,6 +27,8 @@ public static class ServiceCollectionExtensions
 
         // Registrar Repositories
         services.AddScoped<IClienteRepository, ClienteRepository>();
+        services.AddScoped<IContaGraficaRepository, ContaGraficaRepository>();
+        services.AddScoped<ICustodiaRepository, CustodiaRepository>();
         services.AddScoped<IRepository<ContaGrafica>, ContaGraficaRepository>();
         services.AddScoped<IRepository<Custodia>, CustodiaRepository>();
         services.AddScoped<IRepository<Distribuicao>, DistribuicaoRepository>();
@@ -40,6 +42,7 @@ public static class ServiceCollectionExtensions
         // Registrar Application Services
         services.AddScoped<ICotacaoService, CotacaoService>();
         services.AddScoped<IComprasProgramadasService, ComprasProgramadasService>();
+        services.AddScoped<IRebalanceamentoService, RebalanceamentoService>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IKafkaProducerService, KafkaProducerService>();
 
