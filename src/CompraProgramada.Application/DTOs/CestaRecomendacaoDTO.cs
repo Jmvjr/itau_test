@@ -10,6 +10,24 @@ public class ItemCestaDTO
 }
 
 /// <summary>
+/// Request para criar nova CestaRecomendacao
+/// </summary>
+public class CriarCestaRequest
+{
+    public string Nome { get; set; } = string.Empty;
+    public List<ItemCestaRequest> Itens { get; set; } = new();
+}
+
+/// <summary>
+/// Item da cesta em request
+/// </summary>
+public class ItemCestaRequest
+{
+    public string Ticker { get; set; } = string.Empty;
+    public decimal Percentual { get; set; }
+}
+
+/// <summary>
 /// DTO para CestaRecomendacao - resposta
 /// </summary>
 public class CestaRecomendacaoDTO

@@ -1,11 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
 using CompraProgramada.Application.DTOs;
+using CompraProgramada.Application.Commands;
+using CompraProgramada.Application.Queries;
 
 namespace CompraProgramada.API.Controllers;
 
 /// <summary>
 /// Controller para gerenciar Cestas de Recomendação
+/// RN-014 a RN-019
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -20,6 +23,9 @@ public class CestaController : ControllerBase
 
     /// <summary>
     /// Criar nova cesta de recomendação
+    /// RN-014: Exatamente 5 ativos
+    /// RN-015: Soma percentuais = 100%
+    /// RN-016: Cada percentual > 0%
     /// </summary>
     [HttpPost]
     [ProducesResponseType(statusCode: 201, type: typeof(long))]
@@ -29,9 +35,25 @@ public class CestaController : ControllerBase
         [FromBody] CriarCestaRequest request,
         CancellationToken cancellationToken)
     {
-        // TODO: Implementar command para criar cesta
-        await Task.CompletedTask;
-        return CreatedAtAction(nameof(Obter), new { id = 0L }, 0L);
+        try
+        {
+            var itens = request.Itens.Select(i => (i.Ticker, i.Percentual)).ToList();
+            var command = new CriarCestaCommand(request.Nome, itens);
+            var cestaId = await _mediator.Send(command, cancellationToken);
+            return CreatedAtAction(nameof(Obter), new { id = cestaId }, cestaId);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { mensagem = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
     }
 
     /// <summary>
@@ -43,26 +65,117 @@ public class CestaController : ControllerBase
     [ProducesResponseType(statusCode: 500)]
     public async Task<IActionResult> Obter(long id, CancellationToken cancellationToken)
     {
-        // TODO: Implementar query para obter cesta
-        await Task.CompletedTask;
-        return NotFound();
+        try
+        {
+            var query = new ObterCestaPorIdQuery(id);
+            var cesta = await _mediator.Send(query, cancellationToken);
+            
+            if (cesta == null)
+                return NotFound(new { mensagem = $"Cesta {id} não encontrada" });
+            
+            return Ok(cesta);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
     }
 
     /// <summary>
     /// Listar cestas ativas
     /// </summary>
-    [HttpGet]
-    [ProducesResponseType(statusCode: 200)]
+    [HttpGet("ativas")]
+    [ProducesResponseType(statusCode: 200, type: typeof(List<CestaRecomendacaoDTO>))]
     [ProducesResponseType(statusCode: 500)]
-    public async Task<IActionResult> Listar(CancellationToken cancellationToken)
+    public async Task<IActionResult> ListarAtivas(CancellationToken cancellationToken)
     {
-        // TODO: Implementar query para listar cestas
-        await Task.CompletedTask;
-        return Ok(new List<CestaRecomendacaoDTO>());
+        try
+        {
+            var query = new ListarCestasAtivasQuery();
+            var cestas = await _mediator.Send(query, cancellationToken);
+            return Ok(cestas);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Listar todas as cestas (ativas e inativas)
+    /// </summary>
+    [HttpGet("todas")]
+    [ProducesResponseType(statusCode: 200, type: typeof(List<CestaRecomendacaoDTO>))]
+    [ProducesResponseType(statusCode: 500)]
+    public async Task<IActionResult> ListarTodas(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var query = new ListarTodasAsCestasQuery();
+            var cestas = await _mediator.Send(query, cancellationToken);
+            return Ok(cestas);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obter cesta ativa atualmente
+    /// </summary>
+    [HttpGet("ativa")]
+    [ProducesResponseType(statusCode: 200, type: typeof(CestaRecomendacaoDTO))]
+    [ProducesResponseType(statusCode: 404)]
+    [ProducesResponseType(statusCode: 500)]
+    public async Task<IActionResult> ObterAtiva(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var query = new ObterCestaAtivaQuery();
+            var cesta = await _mediator.Send(query, cancellationToken);
+            
+            if (cesta == null)
+                return NotFound(new { mensagem = "Nenhuma cesta ativa no momento" });
+            
+            return Ok(cesta);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Ativar uma cesta (desativa a anterior e dispara rebalanceamento)
+    /// RN-017: Desativa cesta anterior
+    /// RN-019: Dispara rebalanceamento de todos os clientes
+    /// </summary>
+    [HttpPut("{id}/ativar")]
+    [ProducesResponseType(statusCode: 200)]
+    [ProducesResponseType(statusCode: 404)]
+    [ProducesResponseType(statusCode: 500)]
+    public async Task<IActionResult> Ativar(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var command = new AtivarCestaCommand(id);
+            await _mediator.Send(command, cancellationToken);
+            return Ok(new { mensagem = $"Cesta {id} ativada com sucesso e rebalanceamento disparado" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
     }
 
     /// <summary>
     /// Desativar cesta
+    /// RN-017
     /// </summary>
     [HttpDelete("{id}")]
     [ProducesResponseType(statusCode: 200)]
@@ -70,9 +183,20 @@ public class CestaController : ControllerBase
     [ProducesResponseType(statusCode: 500)]
     public async Task<IActionResult> Desativar(long id, CancellationToken cancellationToken)
     {
-        // TODO: Implementar command para desativar cesta
-        await Task.CompletedTask;
-        return Ok();
+        try
+        {
+            var command = new DesativarCestaCommand(id);
+            await _mediator.Send(command, cancellationToken);
+            return Ok(new { mensagem = $"Cesta {id} desativada com sucesso" });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { mensagem = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { mensagem = ex.Message });
+        }
     }
 }
 
