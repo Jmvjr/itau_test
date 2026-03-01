@@ -3,6 +3,7 @@ using CompraProgramada.Application.Commands;
 using CompraProgramada.Domain.Entities;
 using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Application.Services;
+using CompraProgramada.Application.EventHandlers;
 
 namespace CompraProgramada.Application.Handlers;
 
@@ -43,15 +44,18 @@ public class AtivarCestaCommandHandler : IRequestHandler<AtivarCestaCommand, boo
     private readonly ICestaRepository _cestaRepository;
     private readonly IRebalanceamentoService _rebalanceamentoService;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IPublisher _publisher;
 
     public AtivarCestaCommandHandler(
         ICestaRepository cestaRepository,
         IRebalanceamentoService rebalanceamentoService,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        IPublisher publisher)
     {
         _cestaRepository = cestaRepository ?? throw new ArgumentNullException(nameof(cestaRepository));
         _rebalanceamentoService = rebalanceamentoService ?? throw new ArgumentNullException(nameof(rebalanceamentoService));
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
     }
 
     public async Task<bool> Handle(AtivarCestaCommand request, CancellationToken cancellationToken)
@@ -82,6 +86,20 @@ public class AtivarCestaCommandHandler : IRequestHandler<AtivarCestaCommand, boo
         {
             await _rebalanceamentoService.ProcessarRebalanceamentoAsync(cestaAnterior, novaCesta);
         }
+
+        // Publicar evento de cesta ativada
+        var itens = novaCesta.Itens
+            .Select(i => (i.Ticker.Valor, i.Percentual.Valor))
+            .ToList();
+
+        var eventoAtivacao = new CestaAtivadaEvent(
+            novaCesta.Id,
+            novaCesta.Nome,
+            cestaAnterior?.Id,
+            cestaAnterior?.Nome,
+            itens);
+
+        await _publisher.Publish(eventoAtivacao, cancellationToken);
 
         return true;
     }

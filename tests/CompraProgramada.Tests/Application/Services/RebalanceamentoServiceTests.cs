@@ -4,6 +4,7 @@ using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Domain.ValueObjects;
 using Moq;
 using Xunit;
+using MediatR;
 
 namespace CompraProgramada.Tests.Application.Services;
 
@@ -13,6 +14,7 @@ public class RebalanceamentoServiceTests
     private readonly Mock<ICotacaoService> _cotacaoServiceMock;
     private readonly Mock<IKafkaProducerService> _kafkaProducerMock;
     private readonly Mock<ICustodiaRepository> _custodiaRepositoryMock;
+    private readonly Mock<IPublisher> _publisherMock;
     private readonly IRebalanceamentoService _service;
 
     public RebalanceamentoServiceTests()
@@ -21,12 +23,14 @@ public class RebalanceamentoServiceTests
         _cotacaoServiceMock = new Mock<ICotacaoService>();
         _kafkaProducerMock = new Mock<IKafkaProducerService>();
         _custodiaRepositoryMock = new Mock<ICustodiaRepository>();
+        _publisherMock = new Mock<IPublisher>();
 
         _service = new RebalanceamentoService(
             _unitOfWorkMock.Object,
             _cotacaoServiceMock.Object,
             _kafkaProducerMock.Object,
-            _custodiaRepositoryMock.Object);
+            _custodiaRepositoryMock.Object,
+            _publisherMock.Object);
     }
 
     [Fact]

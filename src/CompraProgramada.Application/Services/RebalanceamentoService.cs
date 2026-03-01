@@ -1,6 +1,8 @@
 using CompraProgramada.Domain.Entities;
 using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Domain.ValueObjects;
+using CompraProgramada.Application.EventHandlers;
+using MediatR;
 
 namespace CompraProgramada.Application.Services;
 
@@ -14,6 +16,7 @@ public class RebalanceamentoService : IRebalanceamentoService
     private readonly ICotacaoService _cotacaoService;
     private readonly IKafkaProducerService _kafkaProducer;
     private readonly ICustodiaRepository _custodiaRepository;
+    private readonly IPublisher _publisher;
 
     private const decimal AliquotaIR = 0.20m; // 20% para vendas > 20.000
     private const decimal LimiteIsencaoIR = 20000m;
@@ -22,12 +25,14 @@ public class RebalanceamentoService : IRebalanceamentoService
         IUnitOfWork unitOfWork,
         ICotacaoService cotacaoService,
         IKafkaProducerService kafkaProducer,
-        ICustodiaRepository custodiaRepository)
+        ICustodiaRepository custodiaRepository,
+        IPublisher publisher)
     {
         _unitOfWork = unitOfWork ?? throw new ArgumentNullException(nameof(unitOfWork));
         _cotacaoService = cotacaoService ?? throw new ArgumentNullException(nameof(cotacaoService));
         _kafkaProducer = kafkaProducer ?? throw new ArgumentNullException(nameof(kafkaProducer));
         _custodiaRepository = custodiaRepository ?? throw new ArgumentNullException(nameof(custodiaRepository));
+        _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
     }
 
     public async Task<int> ProcessarRebalanceamentoAsync(CestaRecomendacao cestaAnterior, CestaRecomendacao novaCesta)
@@ -57,26 +62,42 @@ public class RebalanceamentoService : IRebalanceamentoService
         foreach (var cliente in clientesAtivos)
         {
             var detalhes = await CalcularAjustesAsync(cliente, cestaAnterior, novaCesta);
-                // Executar vendas (tickers saídos)
-                foreach (var (ticker, quantidade) in detalhes.TickersParaVender)
-                {
-                    await ExecutarVendaAsync(cliente, ticker, quantidade, detalhes);
-                }
-
-                // Executar compras (tickers entrados)
-                foreach (var (ticker, quantidade) in detalhes.TickersParaComprar)
-                {
-                    await ExecutarCompraAsync(cliente, ticker, quantidade);
-                }
-
-                // Executar rebalanceamento (proporção mudou)
-                foreach (var (ticker, novaQuantidade) in detalhes.TickersParaRebalancear)
-                {
-                    await ExecutarRebalanceamentoAsync(cliente, ticker, novaQuantidade, novaCesta);
-                }
-
-                rebalanceamentosProcessados++;
+            
+            // Executar vendas (tickers saídos)
+            foreach (var (ticker, quantidade) in detalhes.TickersParaVender)
+            {
+                await ExecutarVendaAsync(cliente, ticker, quantidade, detalhes);
             }
+
+            // Executar compras (tickers entrados)
+            foreach (var (ticker, quantidade) in detalhes.TickersParaComprar)
+            {
+                await ExecutarCompraAsync(cliente, ticker, quantidade);
+            }
+
+            // Executar rebalanceamento (proporção mudou)
+            foreach (var (ticker, novaQuantidade) in detalhes.TickersParaRebalancear)
+            {
+                await ExecutarRebalanceamentoAsync(cliente, ticker, novaQuantidade, novaCesta);
+            }
+
+            // Publicar evento de rebalanceamento concluído
+            if (detalhes.TemAlteracoes)
+            {
+                var eventoRebalanceamento = new RebalanceamentoConcluidoEvent(
+                    cliente.Id,
+                    cliente.Nome,
+                    detalhes.TickersParaVender.Count,
+                    detalhes.TickersParaComprar.Count,
+                    detalhes.TickersParaRebalancear.Count,
+                    detalhes.ValorTotalVendas,
+                    detalhes.IRAplicado);
+
+                await _publisher.Publish(eventoRebalanceamento);
+            }
+
+            rebalanceamentosProcessados++;
+        }
 
             await _unitOfWork.SaveChangesAsync();
         }
@@ -224,6 +245,17 @@ public class RebalanceamentoService : IRebalanceamentoService
             irAplicado = detalhes.IRAplicado,
             dataVenda = DateTime.UtcNow.ToString("yyyy-MM-dd")
         });
+
+        // Publicar domain event para auditoria
+        var precoVenda = custodiaVenda?.PrecoMedio ?? 0m;
+        var eventoVenda = new VendaRebalanceamentoEvent(
+            cliente.Id,
+            ticker.Valor,
+            quantidade,
+            precoVenda,
+            "Rebalanceamento - Venda");
+
+        await _publisher.Publish(eventoVenda);
     }
 
     private async Task ExecutarCompraAsync(Cliente cliente, Ticker ticker, int quantidade)
@@ -259,6 +291,16 @@ public class RebalanceamentoService : IRebalanceamentoService
             quantidade,
             dataCompra = DateTime.UtcNow.ToString("yyyy-MM-dd")
         });
+
+        // Publicar domain event para auditoria
+        var eventoCompra = new CompraRebalanceamentoEvent(
+            cliente.Id,
+            ticker.Valor,
+            quantidade,
+            0m,
+            "Rebalanceamento - Compra");
+
+        await _publisher.Publish(eventoCompra);
     }
 
     private async Task ExecutarRebalanceamentoAsync(
