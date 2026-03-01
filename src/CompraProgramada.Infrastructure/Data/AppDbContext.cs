@@ -55,15 +55,16 @@ public class AppDbContext : DbContext
             .HasColumnType("DECIMAL(18,2)")
             .IsRequired();
 
-        // CPF como ValueObject com conversão
-        builder.ComplexProperty(c => c.CPF, cpf =>
-        {
-            cpf.Property(p => p.Valor)
-                .HasColumnName("CPF")
-                .HasMaxLength(11)
-                .IsRequired();
-        });
-        builder.HasIndex("CPF").IsUnique().HasDatabaseName("UX_Cliente_CPF");
+        // CPF como ValueObject mapeado para coluna VARCHAR
+        builder.Property(c => c.CPF)
+            .HasConversion(
+                cpf => cpf.Valor,
+                valor => new CPF(valor))
+            .HasColumnName("CPF")
+            .HasMaxLength(11)
+            .IsRequired();
+        
+        builder.HasIndex(c => c.CPF).IsUnique().HasDatabaseName("UX_Cliente_CPF");
 
         builder.Property(c => c.Ativo)
             .IsRequired()
@@ -121,22 +122,22 @@ public class AppDbContext : DbContext
         builder.Property(c => c.ContaGraficaId)
             .IsRequired();
 
-        // Ticker como ValueObject com conversão
-        builder.ComplexProperty(c => c.Ticker, ticker =>
-        {
-            ticker.Property(p => p.Valor)
-                .HasColumnName("Ticker")
-                .HasMaxLength(10)
-                .IsRequired();
-        });
+        // Ticker como ValueObject mapeado para coluna VARCHAR
+        builder.Property(c => c.Ticker)
+            .HasConversion(
+                ticker => ticker.Valor,
+                valor => new Ticker(valor))
+            .HasColumnName("Ticker")
+            .HasMaxLength(10)
+            .IsRequired();
 
-        // Quantidade como ValueObject com conversão
-        builder.ComplexProperty(c => c.Quantidade, qtd =>
-        {
-            qtd.Property(p => p.Valor)
-                .HasColumnName("Quantidade")
-                .IsRequired();
-        });
+        // Quantidade como ValueObject mapeado para coluna INT
+        builder.Property(c => c.Quantidade)
+            .HasConversion(
+                qtd => qtd.Valor,
+                valor => new Quantidade(valor))
+            .HasColumnName("Quantidade")
+            .IsRequired();
 
         builder.Property(c => c.PrecoMedio)
             .HasColumnType("DECIMAL(18,4)")
@@ -147,7 +148,7 @@ public class AppDbContext : DbContext
             .IsRequired();
 
         // Índice composto para consultas rápidas
-        builder.HasIndex("ContaGraficaId", "Ticker").IsUnique().HasDatabaseName("UX_Custodia_ContaTicket");
+        builder.HasIndex(c => new { c.ContaGraficaId, c.Ticker }).IsUnique().HasDatabaseName("UX_Custodia_ContaTicket");
 
         // Relacionamento: Custodia 1:N Distribuições
         builder.HasMany<Distribuicao>()
@@ -217,13 +218,19 @@ public class AppDbContext : DbContext
             nav.WithOwner().HasForeignKey("CestaId");
             nav.HasKey("Id");
 
-            // Configure Ticker como JSON (Owned Type within Owned Collection)
+            // Configure Ticker como ValueObject com conversão
             nav.Property(i => i.Ticker)
+                .HasConversion(
+                    ticker => ticker.Valor,
+                    valor => new Ticker(valor))
                 .HasColumnName("Ticker")
                 .HasMaxLength(10);
 
-            // Configure Percentual como JSON (Owned Type within Owned Collection)
+            // Configure Percentual como ValueObject com conversão
             nav.Property(i => i.Percentual)
+                .HasConversion(
+                    pct => pct.Valor,
+                    valor => new Percentual(valor))
                 .HasColumnName("Percentual")
                 .HasColumnType("DECIMAL(5,2)");
         });
@@ -240,21 +247,21 @@ public class AppDbContext : DbContext
             .IsRequired();
 
         // Ticker como ValueObject
-        builder.ComplexProperty(oc => oc.Ticker, ticker =>
-        {
-            ticker.Property(p => p.Valor)
-                .HasColumnName("Ticker")
-                .HasMaxLength(10)
-                .IsRequired();
-        });
+        builder.Property(oc => oc.Ticker)
+            .HasConversion(
+                ticker => ticker.Valor,
+                valor => new Ticker(valor))
+            .HasColumnName("Ticker")
+            .HasMaxLength(10)
+            .IsRequired();
 
         // Quantidade como ValueObject
-        builder.ComplexProperty(oc => oc.Quantidade, qtd =>
-        {
-            qtd.Property(p => p.Valor)
-                .HasColumnName("Quantidade")
-                .IsRequired();
-        });
+        builder.Property(oc => oc.Quantidade)
+            .HasConversion(
+                qtd => qtd.Valor,
+                valor => new Quantidade(valor))
+            .HasColumnName("Quantidade")
+            .IsRequired();
 
         builder.Property(oc => oc.PrecoUnitario)
             .HasColumnType("DECIMAL(18,4)")
@@ -286,13 +293,13 @@ public class AppDbContext : DbContext
         builder.Property(c => c.Id).ValueGeneratedOnAdd();
 
         // Ticker como ValueObject
-        builder.ComplexProperty(c => c.Ticker, ticker =>
-        {
-            ticker.Property(p => p.Valor)
-                .HasColumnName("Ticker")
-                .HasMaxLength(10)
-                .IsRequired();
-        });
+        builder.Property(c => c.Ticker)
+            .HasConversion(
+                ticker => ticker.Valor,
+                valor => new Ticker(valor))
+            .HasColumnName("Ticker")
+            .HasMaxLength(10)
+            .IsRequired();
 
         builder.Property(c => c.DataPregao)
             .HasColumnType("DATE")
@@ -368,20 +375,20 @@ public class AppDbContext : DbContext
             .IsRequired();
 
         // TickerVendido como ValueObject (nullable)
-        builder.ComplexProperty(r => r.TickerVendido, ticker =>
-        {
-            ticker.Property(p => p!.Valor)
-                .HasColumnName("TickerVendido")
-                .HasMaxLength(10);
-        });
+        builder.Property(r => r.TickerVendido)
+            .HasConversion(
+                ticker => ticker != null ? ticker.Valor : null,
+                valor => !string.IsNullOrEmpty(valor) ? new Ticker(valor) : null)
+            .HasColumnName("TickerVendido")
+            .HasMaxLength(10);
 
         // TickerComprado como ValueObject (nullable)
-        builder.ComplexProperty(r => r.TickerComprado, ticker =>
-        {
-            ticker.Property(p => p!.Valor)
-                .HasColumnName("TickerComprado")
-                .HasMaxLength(10);
-        });
+        builder.Property(r => r.TickerComprado)
+            .HasConversion(
+                ticker => ticker != null ? ticker.Valor : null,
+                valor => !string.IsNullOrEmpty(valor) ? new Ticker(valor) : null)
+            .HasColumnName("TickerComprado")
+            .HasMaxLength(10);
 
         builder.Property(r => r.ValorVenda)
             .HasColumnType("DECIMAL(18,2)")
