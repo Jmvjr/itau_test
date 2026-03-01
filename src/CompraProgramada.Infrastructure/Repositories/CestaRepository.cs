@@ -1,10 +1,11 @@
 using CompraProgramada.Domain.Entities;
+using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class CestaRepository : BaseRepository<CestaRecomendacao>
+public class CestaRepository : BaseRepository<CestaRecomendacao>, ICestaRepository
 {
     public CestaRepository(AppDbContext context) : base(context)
     {

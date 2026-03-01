@@ -1,11 +1,12 @@
 using CompraProgramada.Domain.Entities;
+using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Domain.ValueObjects;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class CotacaoRepository : BaseRepository<Cotacao>
+public class CotacaoRepository : BaseRepository<Cotacao>, ICotacaoRepository
 {
     public CotacaoRepository(AppDbContext context) : base(context)
     {

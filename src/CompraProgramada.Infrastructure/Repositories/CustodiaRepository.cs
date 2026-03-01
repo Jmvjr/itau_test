@@ -1,11 +1,12 @@
 using CompraProgramada.Domain.Entities;
+using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Domain.ValueObjects;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class CustodiaRepository : BaseRepository<Custodia>
+public class CustodiaRepository : BaseRepository<Custodia>, ICustodiaRepository
 {
     public CustodiaRepository(AppDbContext context) : base(context)
     {

@@ -1,10 +1,11 @@
 using CompraProgramada.Domain.Entities;
+using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class EventoIRRepository : BaseRepository<EventoIR>
+public class EventoIRRepository : BaseRepository<EventoIR>, IEventoIRRepository
 {
     public EventoIRRepository(AppDbContext context) : base(context)
     {

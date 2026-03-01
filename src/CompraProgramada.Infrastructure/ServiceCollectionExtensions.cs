@@ -2,6 +2,7 @@ using CompraProgramada.Domain.Entities;
 using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Infrastructure.Data;
 using CompraProgramada.Infrastructure.Repositories;
+using CompraProgramada.Application.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,9 +32,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IRepository<Distribuicao>, DistribuicaoRepository>();
         services.AddScoped<IRepository<CestaRecomendacao>, CestaRepository>();
         services.AddScoped<IRepository<OrdemCompra>, OrdemCompraRepository>();
+        services.AddScoped<ICotacaoRepository, CotacaoRepository>();
         services.AddScoped<IRepository<Cotacao>, CotacaoRepository>();
         services.AddScoped<IRepository<EventoIR>, EventoIRRepository>();
         services.AddScoped<IRepository<Rebalanceamento>, RebalanceamentoRepository>();
+
+        // Registrar Application Services
+        services.AddScoped<ICotacaoService, CotacaoService>();
 
         return services;
     }

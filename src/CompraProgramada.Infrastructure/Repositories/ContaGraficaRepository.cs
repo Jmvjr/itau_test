@@ -1,11 +1,13 @@
 using CompraProgramada.Domain.Entities;
 using CompraProgramada.Domain.Enums;
+using CompraProgramada.Domain.Interfaces;
+using CompraProgramada.Domain.ValueObjects;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class ContaGraficaRepository : BaseRepository<ContaGrafica>
+public class ContaGraficaRepository : BaseRepository<ContaGrafica>, IContaGraficaRepository
 {
     public ContaGraficaRepository(AppDbContext context) : base(context)
     {

@@ -1,10 +1,11 @@
 using CompraProgramada.Domain.Entities;
+using CompraProgramada.Domain.Interfaces;
 using CompraProgramada.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace CompraProgramada.Infrastructure.Repositories;
 
-public class OrdemCompraRepository : BaseRepository<OrdemCompra>
+public class OrdemCompraRepository : BaseRepository<OrdemCompra>, IOrdemCompraRepository
 {
     public OrdemCompraRepository(AppDbContext context) : base(context)
     {
